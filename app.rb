@@ -271,6 +271,7 @@ CSV.foreach(products_input_file, headers: true, encoding: "utf-8") do |row|
     # TODO link supplier via gr:offers
     graph << RDF.Statement(purchase_offer, GR.includes, product)
     graph << RDF.Statement(purchase_offer, GR.hasPriceSpecification, purchase_price)
+    graph << RDF.Statement(purchase_offer, GR.validFrom, purchase_created)
 
     graph << RDF.Statement(purchase_price, RDF.type, GR["UnitPriceSpecification"])
     graph << RDF.Statement(purchase_price, MU.uuid, purchase_price_uuid)
@@ -301,6 +302,7 @@ CSV.foreach(products_input_file, headers: true, encoding: "utf-8") do |row|
   graph << RDF.Statement(rollvolet, GR.offers, selling_offer)
   graph << RDF.Statement(selling_offer, GR.includes, product)
   graph << RDF.Statement(selling_offer, GR.hasPriceSpecification, selling_price)
+  graph << RDF.Statement(selling_offer, GR.validFrom, selling_created)
 
   graph << RDF.Statement(selling_price, RDF.type, GR["UnitPriceSpecification"])
   graph << RDF.Statement(selling_price, MU.uuid, selling_price_uuid)
