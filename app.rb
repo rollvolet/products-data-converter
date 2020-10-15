@@ -35,7 +35,8 @@ class Configuration
       product_suppliers: "ArtikelLeverancier.csv",
       categories: "Categorie.csv",
       subcategories: "SubCategorie.csv",
-      unit_codes: "Eenheid.csv"
+      unit_codes: "Eenheid.csv",
+      suppliers: "Leverancier.csv"
     }
 
     @output_files = {
@@ -112,6 +113,25 @@ public_graph << RDF.Statement(margin_calculation_basis, MU.uuid, uuid)
 public_graph << RDF.Statement(margin_calculation_basis, SKOS.prefLabel, "Marge")
 public_graph << RDF.Statement(margin_calculation_basis, SKOS.inScheme, calculation_basis_concept_scheme)
 public_graph << RDF.Statement(margin_calculation_basis, SKOS.topConceptOf, calculation_basis_concept_scheme)
+puts " done"
+
+print "[ONGOING] Generating business categories concept scheme..."
+uuid = "75ee1704-e2c7-4401-9b56-f57dfdc36064"
+business_categories_concept_scheme = RDF::URI(BASE_URI % { resource: "concept-schemes", id: uuid })
+public_graph << RDF.Statement(business_categories_concept_scheme, RDF.type, SKOS.ConceptScheme)
+public_graph << RDF.Statement(business_categories_concept_scheme, MU.uuid, uuid)
+public_graph << RDF.Statement(business_categories_concept_scheme, SKOS.prefLabel, "Business categories concept scheme")
+puts " done"
+
+print "[ONGOING] Generating business categories concepts..."
+uuid = "34104acc-3633-4ea6-a465-87075d0e1cd1"
+supplier_business_category = RDF::URI(BASE_URI % { resource: "business-categories", id: uuid })
+public_graph << RDF.Statement(supplier_business_category, RDF.type, SKOS.Concept)
+public_graph << RDF.Statement(supplier_business_category, RDF.type, EXT["BusinessCategory"])
+public_graph << RDF.Statement(supplier_business_category, MU.uuid, uuid)
+public_graph << RDF.Statement(supplier_business_category, SKOS.prefLabel, "Supplier")
+public_graph << RDF.Statement(supplier_business_category, SKOS.inScheme, business_categories_concept_scheme)
+public_graph << RDF.Statement(supplier_business_category, SKOS.topConceptOf, business_categories_concept_scheme)
 puts " done"
 
 print "[ONGOING] Generating business entity Rollvolet..."
@@ -210,11 +230,31 @@ CSV.foreach(departments_input_file, headers: true, encoding: "utf-8") do |row|
   public_graph << RDF.Statement(subject, SCHEMA.identifier, row["Afdeling"])
   public_graph << RDF.Statement(subject, SCHEMA.title, name)
 
-  departments_uri_map[row["ID"]] = subject
+  departments_uri_map[row["ID"].to_i] = subject
 end
 puts " done"
 
-# TODO convert suppliers data
+suppliers_input_file = config.input_file_path(:suppliers)
+suppliers_uri_map = {}
+print "[ONGOING] Converting suppliers found in #{suppliers_input_file}..."
+CSV.foreach(suppliers_input_file, headers: true) do |row|
+  uuid = BSON::ObjectId.new.to_s
+  subject = RDF::URI(BASE_URI % { resource: "business-entities", id: uuid })
+  name = row["Naam"]
+  created = DateTime.parse(row["Cre_Timestamp"])
+  modified = DateTime.parse(row["Upd_Timestamp"])
+
+  graph << RDF.Statement(subject, RDF.type, GR["BusinessEntity"])
+  graph << RDF.Statement(subject, MU.uuid, uuid)
+  graph << RDF.Statement(subject, DCT.identifier, row["ID"])
+  graph << RDF.Statement(subject, GR.name, name)
+  graph << RDF.Statement(subject, DCT.created, created)
+  graph << RDF.Statement(subject, DCT.modified, modified)
+  graph << RDF.Statement(subject, GR.category, supplier_business_category)
+
+  suppliers_uri_map[row["ID"].to_i] = subject
+end
+puts " done"
 
 products_supplier_input_file = config.input_file_path(:product_suppliers)
 print "[ONGOING] Reading product-suppliers data found in #{products_supplier_input_file}..."
@@ -245,7 +285,8 @@ CSV.foreach(products_input_file, headers: true, encoding: "utf-8") do |row|
   # Warehouse location
   warehouse_location_uuid = BSON::ObjectId.new.to_s
   warehouse_location = RDF::URI(BASE_URI % { resource: "warehouse-locations", id: warehouse_location_uuid })
-  department = departments_uri_map[row["AfdelingId"]]
+  department = departments_uri_map[row["AfdelingId"].to_i] unless row["AfdelingId"].nil?
+  puts "No department found with key #{row["AfdelingId"]}" if department.nil?
 
   graph << RDF.Statement(warehouse_location, RDF.type, STOCK["WarehouseLocation"])
   graph << RDF.Statement(warehouse_location, MU.uuid, warehouse_location_uuid)
@@ -264,11 +305,12 @@ CSV.foreach(products_input_file, headers: true, encoding: "utf-8") do |row|
     purchase_price = RDF::URI(BASE_URI % { resource: "price-specifications", id: purchase_price_uuid })
     purchase_created = DateTime.parse(purchase_row["Cre_Timestamp"])
     purchase_modified = DateTime.parse(purchase_row["Upd_Timestamp"])
+    supplier = suppliers_uri_map[purchase_row["Lev_ID"].to_i] unless purchase_row["Lev_ID"].nil?
 
     graph << RDF.Statement(purchase_offer, RDF.type, GR["Offering"])
     graph << RDF.Statement(purchase_offer, MU.uuid, purchase_offer_uuid)
     graph << RDF.Statement(purchase_offer, GR.name, "Inkoopprijs")
-    # TODO link supplier via gr:offers
+    graph << RDF.Statement(supplier, GR.offers, purchase_offer) unless supplier.nil?
     graph << RDF.Statement(purchase_offer, GR.includes, product)
     graph << RDF.Statement(purchase_offer, GR.hasPriceSpecification, purchase_price)
     graph << RDF.Statement(purchase_offer, GR.validFrom, purchase_created)
