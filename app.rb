@@ -305,6 +305,7 @@ CSV.foreach(products_input_file, headers: true, encoding: "utf-8") do |row|
     purchase_price = RDF::URI(BASE_URI % { resource: "price-specifications", id: purchase_price_uuid })
     purchase_created = DateTime.parse(purchase_row["Cre_Timestamp"])
     purchase_modified = DateTime.parse(purchase_row["Upd_Timestamp"])
+    purchase_identifier = purchase_row["LevNummer"].to_s if purchase_row["LevNummer"]
     supplier = suppliers_uri_map[purchase_row["Lev_ID"].to_i] unless purchase_row["Lev_ID"].nil?
 
     graph << RDF.Statement(purchase_offer, RDF.type, GR["Offering"])
@@ -314,6 +315,7 @@ CSV.foreach(products_input_file, headers: true, encoding: "utf-8") do |row|
     graph << RDF.Statement(product, EXT.purchaseOffering, purchase_offer)
     graph << RDF.Statement(purchase_offer, GR.hasPriceSpecification, purchase_price)
     graph << RDF.Statement(purchase_offer, GR.validFrom, purchase_created)
+    graph << RDF.Statement(purchase_offer, DCT.identifier, purchase_identifier) unless purchase_identifier.nil?
 
     graph << RDF.Statement(purchase_price, RDF.type, GR["UnitPriceSpecification"])
     graph << RDF.Statement(purchase_price, MU.uuid, purchase_price_uuid)
