@@ -311,7 +311,7 @@ CSV.foreach(products_input_file, headers: true, encoding: "utf-8") do |row|
     graph << RDF.Statement(purchase_offer, MU.uuid, purchase_offer_uuid)
     graph << RDF.Statement(purchase_offer, GR.name, "Inkoopprijs")
     graph << RDF.Statement(supplier, GR.offers, purchase_offer) unless supplier.nil?
-    graph << RDF.Statement(purchase_offer, GR.includes, product)
+    graph << RDF.Statement(product, EXT.purchaseOffering, purchase_offer)
     graph << RDF.Statement(purchase_offer, GR.hasPriceSpecification, purchase_price)
     graph << RDF.Statement(purchase_offer, GR.validFrom, purchase_created)
 
@@ -342,7 +342,7 @@ CSV.foreach(products_input_file, headers: true, encoding: "utf-8") do |row|
   graph << RDF.Statement(selling_offer, MU.uuid, selling_offer_uuid)
   graph << RDF.Statement(selling_offer, GR.name, "Verkoopprijs")
   graph << RDF.Statement(rollvolet, GR.offers, selling_offer)
-  graph << RDF.Statement(selling_offer, GR.includes, product)
+  graph << RDF.Statement(product, EXT.salesOffering, selling_offer)
   graph << RDF.Statement(selling_offer, GR.hasPriceSpecification, selling_price)
   graph << RDF.Statement(selling_offer, GR.validFrom, selling_created)
 
