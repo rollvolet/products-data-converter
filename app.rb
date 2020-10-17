@@ -228,7 +228,7 @@ CSV.foreach(departments_input_file, headers: true, encoding: "utf-8") do |row|
   public_graph << RDF.Statement(subject, MU.uuid, uuid)
   public_graph << RDF.Statement(subject, DCT.identifier, row["ID"])
   public_graph << RDF.Statement(subject, SCHEMA.identifier, row["Afdeling"])
-  public_graph << RDF.Statement(subject, SCHEMA.title, name)
+  public_graph << RDF.Statement(subject, SCHEMA.name, name)
 
   departments_uri_map[row["ID"].to_i] = subject
 end
