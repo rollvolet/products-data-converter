@@ -352,7 +352,7 @@ CSV.foreach(products_input_file, headers: true, encoding: "utf-8") do |row|
   graph << RDF.Statement(selling_price, GR.hasCurrencyValue, RDF::Literal.new(row["VKPIncl"], datatype: RDF::XSD.double)) unless row["VKPIncl"].nil?
   graph << RDF.Statement(selling_price, GR.valueAddedTaxIncluded, RDF::Literal::TRUE)
   graph << RDF.Statement(selling_price, PRICE.margin, RDF::Literal.new(row["Marge"], datatype: RDF::XSD.double)) unless row["Marge"].nil?
-  graph << RDF.Statement(selling_price, PRICE.calulactionBasis, calc_basis)
+  graph << RDF.Statement(selling_price, PRICE.calculationBasis, calc_basis)
   graph << RDF.Statement(selling_price, DCT.created, selling_created)
   graph << RDF.Statement(selling_price, DCT.modified, selling_modified)
 
