@@ -82,17 +82,17 @@ puts " done"
 print "[ONGOING] Generating unit codes concept scheme..."
 uuid = "553bcca5-b4bc-44f3-9fd0-2c79612b982c"
 unit_codes_concept_scheme = RDF::URI(BASE_URI % { resource: "concept-schemes", id: uuid })
-public_graph << RDF.Statement(categories_concept_scheme, RDF.type, SKOS.ConceptScheme)
-public_graph << RDF.Statement(categories_concept_scheme, MU.uuid, uuid)
-public_graph << RDF.Statement(categories_concept_scheme, SKOS.prefLabel, "Unit codes concept scheme")
+public_graph << RDF.Statement(unit_codes_concept_scheme, RDF.type, SKOS.ConceptScheme)
+public_graph << RDF.Statement(unit_codes_concept_scheme, MU.uuid, uuid)
+public_graph << RDF.Statement(unit_codes_concept_scheme, SKOS.prefLabel, "Unit codes concept scheme")
 puts " done"
 
 print "[ONGOING] Generating calculation basis concept scheme..."
 uuid = "ea700201-8d6d-4230-bbd4-87d49ed988f1"
 calculation_basis_concept_scheme = RDF::URI(BASE_URI % { resource: "concept-schemes", id: uuid })
-public_graph << RDF.Statement(categories_concept_scheme, RDF.type, SKOS.ConceptScheme)
-public_graph << RDF.Statement(categories_concept_scheme, MU.uuid, uuid)
-public_graph << RDF.Statement(categories_concept_scheme, SKOS.prefLabel, "Calculation basis concept scheme")
+public_graph << RDF.Statement(calculation_basis_concept_scheme, RDF.type, SKOS.ConceptScheme)
+public_graph << RDF.Statement(calculation_basis_concept_scheme, MU.uuid, uuid)
+public_graph << RDF.Statement(calculation_basis_concept_scheme, SKOS.prefLabel, "Calculation basis concept scheme")
 puts " done"
 
 print "[ONGOING] Generating calculation basis concepts..."
