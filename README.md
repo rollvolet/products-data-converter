@@ -1,4 +1,4 @@
-# products-data-convertor
+# products-data-converter
 
 Script to convert CSV exports to TTL according to the price management data model.
 
