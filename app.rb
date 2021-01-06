@@ -13,6 +13,9 @@ DCT = RDF::Vocab::DC
 PROV = RDF::Vocab::PROV
 SCHEMA = RDF::Vocab::SCHEMA
 GR = RDF::Vocab::GR
+NFO = RDF::Vocabulary.new("http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#")
+NIE = RDF::Vocabulary.new("http://www.semanticdesktop.org/ontologies/2007/01/19/nie#")
+DBPEDIA = RDF::Vocabulary.new("http://dbpedia.org/resource/")
 MU = RDF::Vocabulary.new("http://mu.semte.ch/vocabularies/core/")
 EXT = RDF::Vocabulary.new("http://mu.semte.ch/vocabularies/ext/")
 STOCK = RDF::Vocabulary.new("http://data.rollvolet.be/vocabularies/stock-management/")
@@ -343,6 +346,7 @@ CSV.foreach(products_input_file, headers: true, encoding: "utf-8") do |row|
   graph << RDF.Statement(selling_offer, RDF.type, GR["Offering"])
   graph << RDF.Statement(selling_offer, MU.uuid, selling_offer_uuid)
   graph << RDF.Statement(selling_offer, GR.name, "Verkoopprijs")
+  graph << RDF.Statement(selling_offer, SCHEMA.availability, SCHEMA["InStock"])
   graph << RDF.Statement(rollvolet, GR.offers, selling_offer)
   graph << RDF.Statement(product, EXT.salesOffering, selling_offer)
   graph << RDF.Statement(selling_offer, GR.hasPriceSpecification, selling_price)
@@ -360,6 +364,43 @@ CSV.foreach(products_input_file, headers: true, encoding: "utf-8") do |row|
 
   selling_unit = unit_codes_uri_map[row["VKPEenheid"]]
   graph << RDF.Statement(selling_price, GR.hasUnitOfMeasurement, selling_unit) unless selling_unit.nil?
+
+  if row["Foto"]
+    virtual_file_uuid = BSON::ObjectId.new.to_s
+    virtual_file = RDF::URI(BASE_URI % { resource: "files", id: virtual_file_uuid })
+    i = row["Foto"].rindex("\\")
+    file_name = row["Foto"][i+1..-1]
+    cleaned_file_name = file_name.gsub(/\s/, "-")
+    file_extension = File.extname(file_name)[1..-1].downcase
+    mime_type = "image/jpg"
+    file_path = "data/input/images/#{file_name}"
+    file_size = File.size(file_path)
+
+    graph << RDF.Statement(virtual_file, RDF.type, NFO["FileDataObject"])
+    graph << RDF.Statement(virtual_file, MU.uuid, virtual_file_uuid)
+    graph << RDF.Statement(virtual_file, NFO.fileName, file_name)
+    graph << RDF.Statement(virtual_file, NFO.fileSize, RDF::Literal.new(file_size, datatype: RDF::XSD.integer))
+    graph << RDF.Statement(virtual_file, DCT.format, mime_type)
+    graph << RDF.Statement(virtual_file, DBPEDIA.fileExtension, file_extension)
+    graph << RDF.Statement(virtual_file, DCT.created, created)
+    graph << RDF.Statement(product, DCT.hasPart, virtual_file)
+
+    physical_file_uuid = BSON::ObjectId.new.to_s
+    physical_file_name = "#{physical_file_uuid}.#{file_extension}"
+    physical_file = RDF::URI("share://#{physical_file_name}")
+    graph << RDF.Statement(physical_file, RDF.type, NFO["FileDataObject"])
+    graph << RDF.Statement(physical_file, MU.uuid, physical_file_uuid)
+    graph << RDF.Statement(physical_file, NFO.fileName, physical_file_name)
+    graph << RDF.Statement(physical_file, NFO.fileSize, RDF::Literal.new(file_size, datatype: RDF::XSD.integer))
+    graph << RDF.Statement(physical_file, DCT.format, mime_type)
+    graph << RDF.Statement(physical_file, DBPEDIA.fileExtension, file_extension)
+    graph << RDF.Statement(physical_file, DCT.created, created)
+    graph << RDF.Statement(physical_file, NIE.dataSource, virtual_file)
+
+    output_file_path = "data/output/images/#{physical_file_name}"
+    file_data = File.open(file_path, "r") { |f| f.read }
+    File.open(output_file_path, "w") { |f| f.write file_data }
+  end
 end
 puts " done"
 
